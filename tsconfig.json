@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "declaration": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "outDir": "dist/server",
+    "sourceMap": true,
+    "target": "es6",
+    "types": [ "node", "mocha" ]
+  },
+  "files": [ "src/main.ts" ],
+  "include": [ "src/**/*.ts" ]
+}

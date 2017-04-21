@@ -1,0 +1,20 @@
+{
+  "port": 8080,
+  "osmodToken": "JWT seacrits",
+  "authWhitelist": ["foo"], // "enter your moderator assisatnt auth keys here"
+  "googleCloudApiKey": "",
+  "attributeRequests": {
+      "ATTACK_ON_AUTHOR": {},
+      "ATTACK_ON_COMMENTER": {},
+      "ATTACK_ON_PUBLISHER": {},
+      "INCOHERENT": {},
+      "INFLAMMATORY": {},
+      "OBSCENE": {},
+      "OFF_TOPIC": {},
+      "SPAM": {},
+      "UNSUBSTANTIAL": {},
+      "LIKELY_TO_REJECT": {},
+      "TOXICITY": {},
+      "TOXICITY_FAST": {}
+    }
+}

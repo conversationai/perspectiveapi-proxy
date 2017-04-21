@@ -1,0 +1,12 @@
+FROM node:6.10.1
+
+RUN mkdir -p /opt/server/
+COPY . /opt/server
+
+WORKDIR /opt/server
+
+RUN npm install
+
+CMD npm run watch
+
+EXPOSE 8080
