@@ -145,5 +145,5 @@ page](https://github.com/conversationai/perspectiveapi/blob/master/README.md).
 
 ## Notes
 
-This is example code to help experimentation with the Perspective API; it is not an official Google product.
+This example code is to help experimentation with the Perspective API; it is not an official Google product.
 
