@@ -25,7 +25,11 @@ moderation assistant](https://github.com/conversationai/conversationai-moderator
 
 ```
 yarn install
-GOOGLE_API_KEY=generated-api-key AUTH_WHITELIST=s3cret ATTRIBUTE_REQUESTS='{ "TOXICITY": {} }' PORT=8080 yarn run watch
+GOOGLE_CLOUD_API_KEY=generated-api-key \
+  AUTH_WHITELIST=s3cret \
+  ATTRIBUTE_REQUESTS='{ "TOXICITY": {} }' \
+  PORT=8080 \
+  yarn run watch
 ```
 
 This command will automatically restart your server when you update the code.
@@ -43,8 +47,9 @@ curl -H 'Authorization: s3cret' \
 
 ## Testing
 
-To run linters: `./bin/lint`
-To run tests: `./bin/test`
+To run linters: `yarn run lint`
+
+To run tests: `yarn run test`
 
 ## Testing/debugging model scoring
 
@@ -146,4 +151,3 @@ page](https://github.com/conversationai/perspectiveapi/blob/master/README.md).
 ## Notes
 
 This example code is to help experimentation with the Perspective API; it is not an official Google product.
-
