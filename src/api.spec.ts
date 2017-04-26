@@ -374,14 +374,12 @@ describe('api router', () => {
       config.load({requestLimit: origRequestLimit});
     });
 
-    it('should request all attributes from ML API', (done) => {
+    it('should request all configured attributes from ML API', (done) => {
+      const configuredAttributes = config.get('attributeRequests');
       const stub: api.IAnalyzeCommentStub = (analyzeCommentRequest) => {
         assert.isOk(analyzeCommentRequest.requestedAttributes,
                     'requestedAttributes present');
-        for (const x of [
-          'ATTACK_ON_AUTHOR', 'ATTACK_ON_COMMENTER', 'ATTACK_ON_PUBLISHER',
-          'INCOHERENT', 'INFLAMMATORY', 'OBSCENE', 'OFF_TOPIC', 'SPAM',
-          'UNSUBSTANTIAL', 'LIKELY_TO_REJECT', 'TOXICITY', 'TOXICITY_FAST']) {
+        for (const x in configuredAttributes) {
           assert(x in analyzeCommentRequest.requestedAttributes,
                  x + ' is in requestedAttributes');
         }
