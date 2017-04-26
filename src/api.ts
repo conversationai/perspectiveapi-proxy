@@ -21,24 +21,10 @@ import config from './config';
 import { vlog1, vlog2 }  from './logging';
 import createCommentAnalyzerClient from './ml_client';
 
-const REQUEST_LOG_SIZE_LIMIT = 500;
-const ERROR_LOG_SIZE_LIMIT = 2000;
-const debugRequestLog: Object[] = [];
-const debugErrorLog: Object[] = [];
 let commentCounter = 0;
 
 function logError(reqId: number, error: any, msg: string): void {
   vlog1(`***ERROR*** [${reqId}] ${msg}:`, error);
-  if (debugErrorLog.push({reqId: reqId, msg: msg, error: error}) > ERROR_LOG_SIZE_LIMIT) {
-    debugErrorLog.shift();
-  }
-}
-
-// Add obj to debugRequestLog. Limits size.
-function logRequest(obj: Object): void {
-  if (debugRequestLog.push(obj) > REQUEST_LOG_SIZE_LIMIT) {
-    debugRequestLog.shift();
-  }
 }
 
 // Interface implemented by scoring function. Provides the Osmod<->Assistant
@@ -199,14 +185,8 @@ export function getCommentAnalyzerScorer(analyzeComment: IAnalyzeCommentStub): I
       vlog1(`--> ${reqId} score-comment. ML success.`);
       vlog2(`--> ${reqId} score-comment. ML response body:`,
             JSON.stringify(acResponse, null, 2));
-      const assistantResponse = ConvertResponseCommentAnalyzerToAssistant(reqId, acRequest,
+      return ConvertResponseCommentAnalyzerToAssistant(reqId, acRequest,
         acResponse, assistantRequest.includeSummaryScores);
-      logRequest({reqId: reqId,
-                  request: {commenttext: assistantRequest.comment.plainText,
-                            postback: assistantRequest.sync || assistantRequest.links.callback},
-                  clientToken: acResponse.clientToken,
-                  scores: assistantResponse});
-      return assistantResponse;
     }).catch((err) => {
       vlog1(`--> ${reqId} score-comment. ML error:`, err);
       logError(reqId, err, 'score-comment AnalyzeComment error');
@@ -300,25 +280,13 @@ export function createApiRouter(commentScorer: ICommentScorer): express.Router {
     });
   });
 
-  // API endpoints for debugging:
-  // - POST /echo just returns the JSON body it gets. Can be used as the
-  //   "links.result" field in /api/score-comment requests.
-  // - GET /log returns recent scoring requests and any errors encountered.
+  // For debugging. POST /echo just returns the JSON body it gets. Can be used
+  // as the "links.result" field in /api/score-comment requests.
   router.post('/echo', (req, res) => {
     vlog1('=> POST /echo. params:', req.params,
           '; query:', req.query,
           '; body:', req.body);
     res.json({echostatus: 'echoyay', reqbody: req.body});
-  });
-
-  router.get('/log', (req, res) => {
-    res.send(JSON.stringify({requests: debugRequestLog,
-                             errors: debugErrorLog},
-                            null, 4));
-  });
-
-  router.get('/logjson', (req, res) => {
-    res.send({requests: debugRequestLog, errors: debugErrorLog});
   });
 
   return router;
