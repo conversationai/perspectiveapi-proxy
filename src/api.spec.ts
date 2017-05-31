@@ -395,6 +395,50 @@ describe('api router', () => {
         .expect(200, done);
     });
 
+    it('should support versioned attributes', (done) => {
+      // This requests 2 versioned attributes. The assistant should strip the
+      // versions from the attribute names.
+      const origAttributeRequests = config.get('attributeRequests');
+      config.load({attributeRequests: {'INFLAMMATORY@2': {}, 'TOXICITY@3': {}}});
+
+      const stub: api.IAnalyzeCommentStub = (analyzeCommentRequest) => {
+        assert.isOk(analyzeCommentRequest.requestedAttributes,
+                    'requestedAttributes present');
+        for (const x of ['INFLAMMATORY@2', 'TOXICITY@3']) {
+          assert(x in analyzeCommentRequest.requestedAttributes,
+                 x + ' is in requestedAttributes');
+        }
+        const response: api.IAnalyzeCommentResponse = {attributeScores: {
+          'INFLAMMATORY@2': {spanScores: [{begin: 0, end: 4, score: {value: 0.5}}],
+                             summaryScore: {value: 0.6}},
+          'TOXICITY@3': {summaryScore: {value: 0.2}},
+        }};
+        return Promise.resolve(response);
+      };
+      app.use('/api', api.createApiRouter(api.getCommentAnalyzerScorer(stub)));
+      request(server)
+        .post('/api/score-comment')
+        .send({sync: true, includeSummaryScores: true, comment: {plainText: 'Hiya'}})
+        .expect(200, done)
+        .expect('Content-Type', /json/)
+        .expect((res: request.Response) => {
+          // Check that both 'scores' and 'summaryScores' only have the
+          // unversioned attribute names.
+          const body = res.body;
+          assert.isOk(body, 'response not hosed');
+          assert.isOk(body.scores, 'result has `scores`');
+          assert(_.isEqual(body.scores,
+                           {INFLAMMATORY: [{begin: 0, end: 4, score: 0.5}],
+                            TOXICITY: [{begin: 0, end: 4, score: 0.2}]}),
+                 'scores are as expected');
+          assert.isOk(body.summaryScores, 'result has `summaryScores`');
+          assert(_.isEqual(body.summaryScores, {TOXICITY: 0.2, INFLAMMATORY: 0.6}),
+                 'summaryScores as expected');
+        });
+
+      config.load({attributeRequests: origAttributeRequests});
+    });
+
     it('should return errors from ML', (done) => {
       const stub: api.IAnalyzeCommentStub = (_analyzeCommentRequest) => {
         return Promise.reject<api.IAnalyzeCommentResponse>(Error('Fail town sry'));

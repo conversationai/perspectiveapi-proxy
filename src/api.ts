@@ -154,31 +154,38 @@ function ConvertRequestAssistantToCommentAnalyzer(aRequest: IAssistantRequest, r
   return acRequest;
 }
 
+// Removes '@...' suffix, if present.
+function StripAttributeVersion(attributeName: string): string {
+  return attributeName.replace(/@.*/, '');
+}
+
 function ConvertResponseCommentAnalyzerToAssistant(
     reqId: number,
     acRequest: IAnalyzeCommentRequest,
     acResponse: IAnalyzeCommentResponse,
     includeSummaryScores: boolean): IAssistantResponseGood {
-  // This just flattens nested score values and renames some fields.
+  // This flattens nested score values, renames some fields, and strips
+  // attribute versions.
   const spanScores: IAssistantAttributeSpanScores = {};
   const summaryScores: IAssistantAttributeSummaryScores = {};
   for (const attributeName in acResponse.attributeScores) {
     const attributeScore = acResponse.attributeScores[attributeName];
+    const unversionedName = StripAttributeVersion(attributeName);
     if (attributeScore.summaryScore) {
-      summaryScores[attributeName] = attributeScore.summaryScore.value;
+      summaryScores[unversionedName] = attributeScore.summaryScore.value;
     } else {
       logError(reqId, {},
           'Strangely there are no summary scores for: ' + attributeName);
     }
     if (attributeScore.spanScores && attributeScore.spanScores.length > 0) {
-      spanScores[attributeName] = attributeScore.spanScores.map(
+      spanScores[unversionedName] = attributeScore.spanScores.map(
         ({begin, end, score: {value}}) => ({begin: begin, end: end, score: value})
       );
     } else if (attributeScore.summaryScore) {
-      spanScores[attributeName] = [{
+      spanScores[unversionedName] = [{
           begin: 0,
           end: acRequest.comment.text.length,
-          score: summaryScores[attributeName],
+          score: attributeScore.summaryScore.value,
         }];
     } else {
       logError(reqId, {},
