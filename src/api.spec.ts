@@ -409,7 +409,8 @@ describe('api router', () => {
                  x + ' is in requestedAttributes');
         }
         const response: api.IAnalyzeCommentResponse = {attributeScores: {
-          'INFLAMMATORY@2': {spanScores: [{begin: 0, end: 4, score: {value: 0.5}}]},
+          'INFLAMMATORY@2': {spanScores: [{begin: 0, end: 4, score: {value: 0.5}}],
+                             summaryScore: {value: 0.6}},
           'TOXICITY@3': {summaryScore: {value: 0.2}},
         }};
         return Promise.resolve(response);
@@ -431,7 +432,7 @@ describe('api router', () => {
                             TOXICITY: [{begin: 0, end: 4, score: 0.2}]}),
                  'scores are as expected');
           assert.isOk(body.summaryScores, 'result has `summaryScores`');
-          assert(_.isEqual(body.summaryScores, {TOXICITY: 0.2}),
+          assert(_.isEqual(body.summaryScores, {TOXICITY: 0.2, INFLAMMATORY: 0.6}),
                  'summaryScores as expected');
         });
 
