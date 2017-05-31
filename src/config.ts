@@ -83,7 +83,12 @@ const config: convict.Config = convict({
   attributeRequests: {
     doc: 'The set of requests to make to the PerspectiveAPI.',
     format: Object,
-    default: {'TOXICITY': {}},
+    // NOTE: Convict appears to have surprising behavior when merging Object
+    // config values. When loading a config from a file, it seems like the
+    // object values are merged, and there doesn't seem to be a way to *remove*
+    // attributes when they're present in this default, so we leave it empty so
+    // config files can specify exactly what attributes to requested.
+    default: {},
     env: 'ATTRIBUTE_REQUESTS',
   },
   // Note: To specify multiple tokens via the AUTH_WHITELIST environment
@@ -103,9 +108,25 @@ try {
   config.loadFile(envFile);
   console.log('Loaded config file:', envFile);
 } catch (e) {
-  console.warn(e.message);
+  console.error('Exception loading config file:', e.message);
 }
 
 config.validate({strict: true});
+
+// TODO(jetpack): I get confusing errors when trying to use this as the 'format'
+// checking method on attributeRequests. Doing this validate here at
+// module-level means we don't get checking when dynamically loading a new
+// config, but we do at least test the actual production code path.
+function checkAttributeRequests(attrRequests: Object) {
+  const unversionedNames = [];
+  for (const attrName in attrRequests) {
+    const unversioned = attrName.replace(/@.*/, '');
+    if (unversionedNames.indexOf(unversioned) !== -1) {
+      throw new Error('attribute name appears multiple times: ' + unversioned);
+    }
+    unversionedNames.push(unversioned);
+  }
+}
+checkAttributeRequests(config.get('attributeRequests'));
 
 export default config;
