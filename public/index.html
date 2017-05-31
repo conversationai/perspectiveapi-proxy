@@ -46,7 +46,9 @@
         console.log('response:', result);
         let comment = $('#comment').val();
         let table = $('<table><tr><th>Attribute</th><th>Span scores</th></tr></table>');
-        for (const attribute of Object.keys(result.scores)) {
+        let attributes = Object.keys(result.scores);
+        attributes.sort();
+        for (const attribute of attributes) {
           let row = $('<tr><td>' + attribute + '</td></tr>');
           let scoreCell = $('<td>');
           let summaryScore = result.summaryScores[attribute];
