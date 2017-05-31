@@ -132,15 +132,15 @@ yarn run start
 # Architecture
 
 The assistant links the Osmod service with the [Perspective
-API](https://www.perspectiveapi.com). The Osmod service issues
+API](https://www.perspectiveapi.com). The [Osmod](https://github.com/conversationai/conversationai-moderator) service issues
 `/api/score-comment` requests to the assistant. The assistant forwards that
 request to the Perspective API, and (asynchronously) posts the result back
 to Osmod.
 
-## Proxy ↔ Osmod protocol
+## Proxy ↔ Osmod Moderator protocol
 
-The protocol between the assistant and Osmod is documented here:
-https://github.com/Jigsaw-Code/moderator/blob/dev/server/docs/osmod_assistant_protocol.md
+The protocol between the this proxy assistant and [Osmod](https://github.com/conversationai/conversationai-moderator) is documented here:
+https://github.com/conversationai/conversationai-moderator/blob/dev/server/docs/osmod_assistant_protocol.md
 
 ## Proxy ↔ PerspectiveAPI protocol
 
