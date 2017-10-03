@@ -144,6 +144,7 @@ function ConvertRequestAssistantToCommentAnalyzer(aRequest: IAssistantRequest, r
     requestedAttributes: config.get('attributeRequests'),
     languages: ['en'],
     clientToken: config.get('userAgent') + '_request' + reqId,
+    spanAnnotations: true,
   };
   if (aRequest.article && aRequest.article.plainText) {
     acRequest.context.entries.push({text: aRequest.article.plainText});
