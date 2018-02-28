@@ -26,12 +26,12 @@
   "author": "Jigsaw",
   "license": "Apache-2.0",
   "engines": {
-    "node": "6.10.1"
+    "node": "6.10.*"
   },
   "dependencies": {
     "@google-cloud/debug-agent": "^1.0.0",
     "@google-cloud/trace-agent": "^1.0.3",
-    "@types/request": "^0.0.42",
+    "@types/request": "^0.0.45",
     "body-parser": "1.15.2",
     "convict": "1.4.0",
     "express": "4.14.0",

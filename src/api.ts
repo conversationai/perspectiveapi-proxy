@@ -117,7 +117,7 @@ interface IRequestedAttributes {
 }
 
 export interface IAnalyzeCommentResponse {
-  attributeScores: IAttributeScores;
+  attributeScores?: IAttributeScores;
   languages?: string[];
   clientToken?: string;
 }
