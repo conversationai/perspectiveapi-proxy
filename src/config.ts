@@ -50,18 +50,6 @@ const config: convict.Config = convict({
     default: 'OsmodAssistantV0',
     env: 'USER_AGENT',
   },
-  useWikidetox: {
-    doc: 'Use the Wikidetox model instead of the Comment Analyzer API',
-    format: Boolean,
-    default: false,
-    env: 'USE_WIKIDETOX',
-  },
-  wikidetoxEndpoint: {
-    doc: 'The API endpoint for the Wikidetox analyzer',
-    format: String,
-    default: '',
-    env: 'WIKIDETOX_ENDPOINT',
-  },
   commentAnalyzerDiscoveryUrl: {
     doc: 'The discovery document for the Comment Analyzer API',
     format: String,

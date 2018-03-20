@@ -21,29 +21,14 @@ import config from './config';
 import { vlog1, vlog2 }  from './logging';
 import createCommentAnalyzerClient from './ml_client';
 
-const REQUEST_LOG_SIZE_LIMIT = 500;
-const ERROR_LOG_SIZE_LIMIT = 2000;
-const debugRequestLog: Object[] = [];
-const debugErrorLog: Object[] = [];
 let commentCounter = 0;
 
 function logError(reqId: number, error: any, msg: string): void {
   vlog1(`***ERROR*** [${reqId}] ${msg}:`, error);
-  if (debugErrorLog.push({reqId: reqId, msg: msg, error: error}) > ERROR_LOG_SIZE_LIMIT) {
-    debugErrorLog.shift();
-  }
 }
 
-// Add obj to debugRequestLog. Limits size.
-function logRequest(obj: Object): void {
-  if (debugRequestLog.push(obj) > REQUEST_LOG_SIZE_LIMIT) {
-    debugRequestLog.shift();
-  }
-}
-
-// Common interface implemented by both Wikidetox- and Comment Analyzer
-// API-based scoring functions. Provides the Osmod<->Assistant API.
-//
+// Interface implemented by scoring function. Provides the Osmod<->Assistant
+// API.
 export interface ICommentScorer {
   (reqId: number, assistantRequest: IAssistantRequest): Promise<IAssistantResponse>;
 }
@@ -199,7 +184,6 @@ function ConvertResponseCommentAnalyzerToAssistant(
   return response;
 }
 
-// Returns Comment-Analyzer-API--based ICommentScorer given IAnalyzeCommentStub.
 export function getCommentAnalyzerScorer(analyzeComment: IAnalyzeCommentStub): ICommentScorer {
   return (reqId, assistantRequest) => {
     const acRequest = ConvertRequestAssistantToCommentAnalyzer(assistantRequest, reqId);
@@ -208,70 +192,14 @@ export function getCommentAnalyzerScorer(analyzeComment: IAnalyzeCommentStub): I
       vlog1(`--> ${reqId} score-comment. ML success.`);
       vlog2(`--> ${reqId} score-comment. ML response body:`,
             JSON.stringify(acResponse, null, 2));
-      const assistantResponse = ConvertResponseCommentAnalyzerToAssistant(reqId, acRequest,
+      return ConvertResponseCommentAnalyzerToAssistant(reqId, acRequest,
         acResponse, assistantRequest.includeSummaryScores);
-      logRequest({reqId: reqId,
-                  request: {commenttext: assistantRequest.comment.plainText,
-                            postback: assistantRequest.sync || assistantRequest.links.callback},
-                  clientToken: acResponse.clientToken,
-                  scores: assistantResponse});
-      return assistantResponse;
     }).catch((err) => {
       vlog1(`--> ${reqId} score-comment. ML error:`, err);
       logError(reqId, err, 'score-comment AnalyzeComment error');
       // Note: JSON.stringify on Error objects doesn't work, while toString on
       // normal objects doesn't work. Bleh.
       return {error: 'Assistant error communicating with ML backend: ' + err.toString()};
-    });
-  };
-}
-
-// Returns Wikidetox-based ICommentScorer given endpoint to hit.
-export function getWikidetoxScoreFn(wikidetoxEndpoint: string): ICommentScorer {
-  return (reqId, scoreRequest) => {
-    const userAgent = config.get('userAgent');
-    const options = {
-      headers: {'User-Agent': userAgent},
-      uri: wikidetoxEndpoint,
-      json: true,
-      body: {comment: {text: scoreRequest.comment.plainText},
-             client_token: userAgent + '_request' + reqId},
-    };
-    // Post scoring request to wikidetox backend.
-    return new Promise((res) => {
-      request.post(options, (error, response, scoreResponse) => {
-        const statuscode = response && response.statusCode;
-        vlog1(`--> ${reqId} score-comment. ML response: ${statuscode}, error:`, error);
-        vlog2(`--> ${reqId} score-comment. ML response body:`,
-              JSON.stringify(scoreResponse, null, 2));
-        if (error || statuscode !== 200) {
-          logError(reqId, error, 'score-comment getScore error');
-          res({error: 'Assistant error communicating with ML backend: '
-              + error.toString() + ', statuscode:' + statuscode});
-          return;
-        }
-
-        // Map from attribute name to list of per-span scores. Keeps the same form
-        // of the original response, but flattens out some of the fields.
-        const scores: IAssistantAttributeSpanScores = {};
-        for (const attributeName in scoreResponse.scores) {
-          const scoresPerSpan: IAssistantSpanScore[] = [];
-          for (const score of scoreResponse.scores[attributeName]) {
-            scoresPerSpan.push({'score': score.score.value,
-                                'begin': score.span.begin,
-                                'end': score.span.end});
-          }
-          scores[attributeName] = scoresPerSpan;
-        }
-        logRequest({reqId: reqId,
-                    request: {commenttext: scoreRequest.comment.plainText,
-                              postback: scoreRequest.sync || scoreRequest.links.callback},
-                    clientToken: scoreResponse.client_token,
-                    scores: scores});
-
-        // Return reformatted scores.
-        res({scores: scores});
-      });
     });
   };
 }
@@ -313,16 +241,10 @@ function validateScoreComment(body: IAssistantRequest): string {
   }
 }
 
-// Return a ICommentScorer, depending on config parameters.
 export function getCommentScorer(): Promise<ICommentScorer> {
-  const USE_WIKIDETOX = config.get('useWikidetox');
-  if (USE_WIKIDETOX) {
-    return Promise.resolve(getWikidetoxScoreFn(config.get('wikidetoxEndpoint')));
-  } else {
-    return createCommentAnalyzerClient(config.get('commentAnalyzerDiscoveryUrl'),
-                                       config.get('googleCloudApiKey'))
-      .then(getCommentAnalyzerScorer);
-  }
+  return createCommentAnalyzerClient(config.get('commentAnalyzerDiscoveryUrl'),
+                                     config.get('googleCloudApiKey'))
+    .then(getCommentAnalyzerScorer);
 }
 
 export function createApiRouter(commentScorer: ICommentScorer): express.Router {
@@ -365,25 +287,13 @@ export function createApiRouter(commentScorer: ICommentScorer): express.Router {
     });
   });
 
-  // API endpoints for debugging:
-  // - POST /echo just returns the JSON body it gets. Can be used as the
-  //   "links.result" field in /api/score-comment requests.
-  // - GET /log returns recent scoring requests and any errors encountered.
+  // For debugging. POST /echo just returns the JSON body it gets. Can be used
+  // as the "links.result" field in /api/score-comment requests.
   router.post('/echo', (req, res) => {
     vlog1('=> POST /echo. params:', req.params,
           '; query:', req.query,
           '; body:', req.body);
     res.json({echostatus: 'echoyay', reqbody: req.body});
-  });
-
-  router.get('/log', (req, res) => {
-    res.send(JSON.stringify({requests: debugRequestLog,
-                             errors: debugErrorLog},
-                            null, 4));
-  });
-
-  router.get('/logjson', (req, res) => {
-    res.send({requests: debugRequestLog, errors: debugErrorLog});
   });
 
   return router;
