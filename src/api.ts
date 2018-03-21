@@ -88,6 +88,7 @@ export interface IAnalyzeCommentRequest {
   requestedAttributes: IRequestedAttributes;
   languages?: string[];
   clientToken?: string;
+  spanAnnotations?: boolean;
 }
 
 interface ITextEntry {
@@ -102,7 +103,7 @@ interface IRequestedAttributes {
 }
 
 export interface IAnalyzeCommentResponse {
-  attributeScores: IAttributeScores;
+  attributeScores?: IAttributeScores;
   languages?: string[];
   clientToken?: string;
 }
@@ -129,6 +130,7 @@ function ConvertRequestAssistantToCommentAnalyzer(aRequest: IAssistantRequest, r
     requestedAttributes: config.get('attributeRequests'),
     languages: ['en'],
     clientToken: config.get('userAgent') + '_request' + reqId,
+    spanAnnotations: true,
   };
   if (aRequest.article && aRequest.article.plainText) {
     acRequest.context.entries.push({text: aRequest.article.plainText});

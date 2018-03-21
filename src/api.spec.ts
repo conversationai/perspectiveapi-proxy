@@ -71,6 +71,7 @@ describe('api router', () => {
                            'languages has single entry');
         assert.strictEqual(analyzeCommentRequest.languages[0], 'en',
                            'language set correctly');
+        assert.isTrue(analyzeCommentRequest.spanAnnotations, 'Span scores set.');
         // More elaborate response from the ML API: multiple attributes, each
         // with multiple scores. Only INCOHERENT has a summary score.
         const response: api.IAnalyzeCommentResponse = {attributeScores: {
