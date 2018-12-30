@@ -26,7 +26,7 @@
   "author": "Jigsaw",
   "license": "Apache-2.0",
   "engines": {
-    "node": "6.10.*"
+    "node": "8"
   },
   "dependencies": {
     "@google-cloud/debug-agent": "^1.0.0",

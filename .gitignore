@@ -13,5 +13,4 @@ build/
 *.css.map
 .awcache
 ansible_playbook.retry
-yarn.lock
 yarn-error.log
